@@ -68,14 +68,21 @@ Rules:
     const raw = completion.choices[0]?.message?.content ?? "";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      res.status(500).json({ error: "AI returned invalid mind map format." });
+      res.status(500).json({ error: "AI returned invalid mind map format. Please try again." });
       return;
     }
     const parsed = JSON.parse(jsonMatch[0]);
     res.json(parsed);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Mind map generation failed.";
-    res.status(503).json({ error: message });
+    const status = (err as { status?: number }).status;
+    const friendly =
+      status === 404
+        ? `AI model '${FREE_TEXT_MODEL}' is not available on OpenRouter. Set AI_TEXT_MODEL to a valid model or leave it unset to use the default.`
+        : /quota|rate.?limit|insufficient|payment/i.test(message)
+          ? "AI quota exceeded. Check your OpenRouter credits at openrouter.ai/credits."
+          : `Mind map generation failed: ${message}`;
+    res.status(503).json({ error: friendly });
   }
 });
 

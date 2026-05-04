@@ -1128,6 +1128,8 @@ router.post("/generate/stream", async (req, res, next): Promise<void> => {
     let msg: string;
     if (code === "insufficient_quota" || code === "insufficient_credits" || status === 402) {
       msg = "AI provider quota exceeded. Add credits to your OpenRouter account at openrouter.ai/credits, switch to a free model, or use a different API key.";
+    } else if (status === 404) {
+      msg = `AI model not found on OpenRouter. The model '${FREE_TEXT_MODEL}' may be retired or unavailable. Unset AI_TEXT_MODEL to fall back to the default, or set it to a valid OpenRouter model.`;
     } else if (status === 429 || code === "too_many_requests") {
       msg = "AI is temporarily rate-limited. Wait a minute and try again.";
     } else {
@@ -1704,6 +1706,10 @@ router.post("/generate", async (req, res, next): Promise<void> => {
       res.status(402).json({
         error: "AI provider quota exceeded. Add credits to your OpenRouter account at openrouter.ai/credits, switch to a free model, or use a different API key.",
       });
+      return;
+    }
+    if (status === 404) {
+      res.status(503).json({ error: `AI model not found on OpenRouter. The model '${FREE_TEXT_MODEL}' may be retired or unavailable. Unset AI_TEXT_MODEL to fall back to the default.` });
       return;
     }
     if (status === 429 || code === "too_many_requests") {

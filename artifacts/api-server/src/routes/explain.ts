@@ -240,12 +240,15 @@ router.post("/explain", async (req, res): Promise<void> => {
   } catch (err) {
     req.log.error({ err }, "AI explanation failed");
     const message = err instanceof Error ? err.message : "AI explanation failed.";
+    const status = (err as { status?: number }).status;
     const friendly =
-      /quota|rate.?limit|insufficient|payment|billing/i.test(message)
-        ? "AI provider quota exceeded. Add credits at openrouter.ai/credits, switch to a free model via AI_TEXT_MODEL, or use a different API key."
-        : /context length|maximum context|too many tokens/i.test(message)
-          ? "The explanation request was too long for this model. Try a shorter card or a different model via AI_TEXT_MODEL."
-          : `AI explanation failed: ${message}`;
+      status === 404
+        ? `AI model '${EXPLAIN_MODEL}' is not available on OpenRouter. Set AI_TEXT_MODEL to a valid model or leave it unset to use the default.`
+        : /quota|rate.?limit|insufficient|payment|billing/i.test(message)
+          ? "AI provider quota exceeded. Add credits at openrouter.ai/credits."
+          : /context length|maximum context|too many tokens/i.test(message)
+            ? "The explanation request was too long for this model. Try a shorter card."
+            : `AI explanation failed: ${message}`;
     if (!res.headersSent) {
       res.status(503).json({ error: friendly });
     } else {

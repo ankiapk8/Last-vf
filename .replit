@@ -99,3 +99,5 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
+AI_TEXT_MODEL = "xiaomi/mimo-v2-flash:free"
+AI_VISION_MODEL = "google/gemma-4-31b-it:free"

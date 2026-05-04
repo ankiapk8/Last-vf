@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { pool } from "@workspace/db";
 import { logger } from "../lib/logger";
-import { FREE_TEXT_MODEL, FREE_VISION_MODEL, EXPLAIN_MODEL, VISUAL_DETECTION_MODEL } from "../lib/models";
+import { FREE_TEXT_MODEL, FREE_VISION_MODEL, EXPLAIN_MODEL, VISUAL_DETECTION_MODEL, MODEL_SUMMARY } from "../lib/models";
 
 const router: IRouter = Router();
 
@@ -71,19 +71,13 @@ async function checkAiProvider(): Promise<CheckResult> {
 }
 
 router.get("/model-info", (_req, res) => {
-  const textModel    = FREE_TEXT_MODEL;
-  const visionModel  = FREE_VISION_MODEL;
-  const explainModel = EXPLAIN_MODEL;
-  const visualModel  = VISUAL_DETECTION_MODEL;
   const isFree = (m: string) => /:free$/.test(m) || /free/i.test(m.split("/").pop() ?? "");
   res.json({
-    textModel,
-    visionModel,
-    explainModel,
-    visualModel,
-    textFree:   isFree(textModel),
-    visionFree: isFree(visionModel),
-    sameModel:  textModel === visionModel,
+    ...MODEL_SUMMARY,
+    textFree:   isFree(MODEL_SUMMARY.text),
+    visionFree: isFree(MODEL_SUMMARY.vision),
+    explainFree: isFree(MODEL_SUMMARY.explain),
+    visualDetectionFree: isFree(MODEL_SUMMARY.visualDetection),
   });
 });
 
