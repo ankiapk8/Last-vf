@@ -19,6 +19,7 @@ import feedbackRouter from "./feedback";
 import topicsRouter from "./topics";
 import subscriptionRouter from "./subscription";
 import devRouter from "./dev";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use(deckMindMapsRouter);
 router.use(feedbackRouter);
 router.use(topicsRouter);
 router.use(devRouter);
+router.use(adminRouter);
 
 export default router;

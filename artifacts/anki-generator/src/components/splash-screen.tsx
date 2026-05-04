@@ -891,11 +891,6 @@ const FEATURES = [
 ];
 
 export function SplashScreen({ children }: { children: React.ReactNode }) {
-  // In development, skip the splash entirely so the app is immediately usable.
-  if (import.meta.env.DEV) {
-    return <>{children}</>;
-  }
-
   const [isDark, setIsDark] = useState<boolean>(
     () => document.documentElement.classList.contains("dark"),
   );

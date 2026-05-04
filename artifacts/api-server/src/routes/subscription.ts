@@ -190,7 +190,9 @@ router.get("/subscription/usage", async (req, res, next): Promise<void> => {
       return;
     }
     const userId = req.isAuthenticated() ? req.user!.id : null;
-    const isPro = devEntry ? devEntry.isPro : false;
+    const isPro = userId
+      ? await checkIsPro(userId)
+      : devEntry?.isPro ?? false;
 
     const deckResult = userId
       ? await db.execute(sql`SELECT cast(count(*) as int) AS cnt FROM decks WHERE user_id = ${userId}`)

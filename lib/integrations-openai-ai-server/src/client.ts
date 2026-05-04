@@ -12,9 +12,13 @@ if (!apiKey) {
   );
 }
 
+// OPENROUTER_BASE_URL takes priority; AI_INTEGRATIONS_OPENAI_BASE_URL is a
+// legacy fallback for the Replit OpenAI connector. If neither is set, default
+// to OpenRouter so free Gemini/Llama models work out of the box.
 const baseURL =
-  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
   process.env.OPENROUTER_BASE_URL ||
+  (process.env.OPENROUTER_API_KEY ? "https://openrouter.ai/api/v1" : undefined) ||
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ||
   "https://openrouter.ai/api/v1";
 
 export const openai = new OpenAI({

@@ -52,12 +52,12 @@ export async function checkIsPro(userId: string): Promise<boolean> {
     // stripe schema not available — fall through to column-based check
   }
   try {
-    // Fallback: check stripe_subscription_id column directly on the user row
-    // (populated by Stripe webhook or manual admin grant)
+    // Fallback: check stripe_subscription_id OR manual_pro columns on the user row
     const userRow = await db.execute(
-      sql`SELECT stripe_subscription_id FROM public.users WHERE id = ${userId} LIMIT 1`,
+      sql`SELECT stripe_subscription_id, manual_pro FROM public.users WHERE id = ${userId} LIMIT 1`,
     );
-    const row = userRow.rows[0] as { stripe_subscription_id?: string | null } | undefined;
+    const row = userRow.rows[0] as { stripe_subscription_id?: string | null; manual_pro?: string | null } | undefined;
+    if (row?.manual_pro === "true") return true;
     return typeof row?.stripe_subscription_id === "string" && row.stripe_subscription_id.length > 0;
   } catch {
     return false;

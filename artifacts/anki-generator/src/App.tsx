@@ -26,6 +26,7 @@ import History from "@/pages/history";
 import QbankDetail from "@/pages/qbank-detail";
 import PracticeQbank from "@/pages/practice-qbank";
 import AdminFeedback from "@/pages/admin-feedback";
+import AdminUsers from "@/pages/admin-users";
 import NotFound from "@/pages/not-found";
 import { StudyPlannerTab } from "@/pages/study-planner-tab";
 import StudyDue from "@/pages/study-due";
@@ -132,6 +133,7 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Switch>
             <Route path="/admin/feedback-9x7k" component={AdminFeedback} />
+            <Route path="/admin/users" component={AdminUsers} />
             <Route component={AppContent} />
           </Switch>
         </WouterRouter>
