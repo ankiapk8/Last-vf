@@ -74,6 +74,9 @@ router.get("/model-info", (_req, res) => {
   const isFree = (m: string) => /:free$/.test(m) || /free/i.test(m.split("/").pop() ?? "");
   res.json({
     ...MODEL_SUMMARY,
+    textModel:   MODEL_SUMMARY.text,
+    visionModel: MODEL_SUMMARY.vision,
+    sameModel:   MODEL_SUMMARY.text === MODEL_SUMMARY.vision,
     textFree:   isFree(MODEL_SUMMARY.text),
     visionFree: isFree(MODEL_SUMMARY.vision),
     explainFree: isFree(MODEL_SUMMARY.explain),

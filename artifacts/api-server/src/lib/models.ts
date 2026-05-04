@@ -19,7 +19,7 @@ const envVision = process.env.AI_VISION_MODEL?.trim() || null;
 
 /** Fast, high-reasoning text model — used for deck generation, mind maps, MCQ */
 export const FREE_TEXT_MODEL =
-  envText ?? (isOpenRouter ? "xiaomi/mimo-v2-flash:free" : "gpt-4o-mini");
+  envText ?? (isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "gpt-4o-mini");
 
 /** Multimodal / vision model — used for image-based card generation */
 export const FREE_VISION_MODEL =
