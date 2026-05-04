@@ -100,4 +100,4 @@ channel = "stable-25_05"
 
 [userenv.shared]
 AI_TEXT_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
-AI_VISION_MODEL = "meta-llama/llama-3.2-11b-vision-instruct:free"
+AI_VISION_MODEL = "google/gemma-4-31b-it:free"
