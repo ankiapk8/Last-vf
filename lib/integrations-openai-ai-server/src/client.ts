@@ -6,9 +6,6 @@ const apiKey =
   process.env.OPENAI_API_KEY ||
   process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
 
-// OPENROUTER_BASE_URL takes priority; AI_INTEGRATIONS_OPENAI_BASE_URL is a
-// legacy fallback for the Replit OpenAI connector. If neither is set, default
-// to OpenRouter so free Gemini/Llama models work out of the box.
 const baseURL =
   process.env.OPENROUTER_BASE_URL ||
   (process.env.OPENROUTER_API_KEY ? "https://openrouter.ai/api/v1" : undefined) ||
@@ -32,3 +29,29 @@ if (!apiKey) {
     "[integrations-openai] No API key found. Set OPENROUTER_API_KEY or OPENAI_API_KEY. Requests will fail.",
   );
 }
+
+export const FALLBACK_MODEL = "gpt-4o-mini";
+
+/**
+ * Fallback client using Replit's injected AI integration key.
+ * Evaluated lazily so process.env is read at call-time, not module-load time.
+ * Returns null if the Replit integration key is not available.
+ */
+export function getFallbackOpenAI(): OpenAI | null {
+  const replitKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  if (!replitKey) return null;
+  return new OpenAI({
+    apiKey: replitKey,
+    ...(process.env.AI_INTEGRATIONS_OPENAI_BASE_URL
+      ? { baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL }
+      : {}),
+    defaultHeaders: {
+      "HTTP-Referer":
+        process.env.OPENROUTER_HTTP_REFERER || "https://anki-generator.local",
+      "X-Title": process.env.OPENROUTER_APP_TITLE || "Anki Card Generator",
+    },
+  });
+}
+
+/** @deprecated Use getFallbackOpenAI() instead */
+export const fallbackOpenai: OpenAI | null = null;

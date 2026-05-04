@@ -19,8 +19,13 @@ async function getOpenAIClient() {
       "AI explanation is not configured. Set OPENROUTER_API_KEY (https://openrouter.ai/keys).",
     );
   }
-  const { openai } = await import("@workspace/integrations-openai-ai-server");
-  return openai;
+  const { openai, getFallbackOpenAI, FALLBACK_MODEL } = await import("@workspace/integrations-openai-ai-server");
+  return { openai, getFallbackOpenAI, FALLBACK_MODEL };
+}
+
+function isDailyLimitError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.includes("free-models-per-day");
 }
 
 function buildPrompts(
@@ -204,13 +209,14 @@ router.post("/explain", async (req, res): Promise<void> => {
 
   const { system: systemPrompt, user: userPrompt, maxTokens } = buildPrompts(resolvedMode, front, back, choices, correctIndex);
 
-  let openai;
+  let clients;
   try {
-    openai = await getOpenAIClient();
+    clients = await getOpenAIClient();
   } catch (err) {
     res.status(503).json({ error: err instanceof Error ? err.message : "AI not configured." });
     return;
   }
+  const { openai, getFallbackOpenAI, FALLBACK_MODEL } = clients;
 
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
@@ -221,16 +227,29 @@ router.post("/explain", async (req, res): Promise<void> => {
     (res as { flushHeaders: () => void }).flushHeaders();
   }
 
+  const streamPayload = {
+    model: EXPLAIN_MODEL,
+    max_completion_tokens: maxTokens,
+    stream: true as const,
+    messages: [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: userPrompt },
+    ],
+  };
+
   try {
-    const stream = await openai.chat.completions.create({
-      model: EXPLAIN_MODEL,
-      max_completion_tokens: maxTokens,
-      stream: true,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    });
+    let stream;
+    try {
+      stream = await openai.chat.completions.create(streamPayload);
+    } catch (primaryErr) {
+      const fb = isDailyLimitError(primaryErr) ? getFallbackOpenAI() : null;
+      if (fb) {
+        req.log.warn({ err: primaryErr }, "OpenRouter daily limit hit — falling back to gpt-4o-mini for explanation");
+        stream = await fb.chat.completions.create({ ...streamPayload, model: FALLBACK_MODEL });
+      } else {
+        throw primaryErr;
+      }
+    }
 
     for await (const chunk of stream) {
       const text = chunk.choices[0]?.delta?.content;
@@ -244,11 +263,13 @@ router.post("/explain", async (req, res): Promise<void> => {
     const friendly =
       status === 404
         ? `AI model '${EXPLAIN_MODEL}' is not available on OpenRouter. Set AI_TEXT_MODEL to a valid model or leave it unset to use the default.`
-        : /quota|rate.?limit|insufficient|payment|billing/i.test(message)
-          ? "AI provider quota exceeded. Add credits at openrouter.ai/credits."
-          : /context length|maximum context|too many tokens/i.test(message)
-            ? "The explanation request was too long for this model. Try a shorter card."
-            : `AI explanation failed: ${message}`;
+        : isDailyLimitError(err)
+          ? "OpenRouter free daily limit reached. Generation automatically retried via backup AI. Please try again."
+          : /quota|rate.?limit|insufficient|payment|billing/i.test(message)
+            ? "AI provider quota exceeded. Add credits at openrouter.ai/credits."
+            : /context length|maximum context|too many tokens/i.test(message)
+              ? "The explanation request was too long for this model. Try a shorter card."
+              : `AI explanation failed: ${message}`;
     if (!res.headersSent) {
       res.status(503).json({ error: friendly });
     } else {

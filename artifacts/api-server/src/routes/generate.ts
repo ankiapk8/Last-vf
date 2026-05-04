@@ -5,6 +5,7 @@ import { createCanvas, loadImage } from "canvas";
 import { serializeCard } from "../lib/serialize-card";
 import { createRateLimiter } from "../lib/rate-limiter";
 import { FREE_TEXT_MODEL, FREE_VISION_MODEL, VISUAL_DETECTION_MODEL } from "../lib/models";
+import { FALLBACK_MODEL } from "@workspace/integrations-openai-ai-server";
 import { eq } from "drizzle-orm";
 import { getEffectiveIsPro, checkDeckQuota, recordDeckCreation, FREE_TIER, sendLimitError } from "../lib/free-tier-limits";
 
@@ -73,6 +74,11 @@ function isAbortError(error: unknown): boolean {
   return name === "AbortError" || getErrorCode(error) === "ABORT_ERR";
 }
 
+function isDailyLimitError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.includes("free-models-per-day");
+}
+
 async function createChatCompletionWithRetry(
   openai: Awaited<ReturnType<typeof getOpenAIClient>>,
   payload: Parameters<typeof openai.chat.completions.create>[0],
@@ -87,6 +93,17 @@ async function createChatCompletionWithRetry(
       return await openai.chat.completions.create(payload, { signal });
     } catch (error) {
       if (isAbortError(error) || signal?.aborted) throw error;
+
+      if (isDailyLimitError(error)) {
+        const { getFallbackOpenAI } = await import("@workspace/integrations-openai-ai-server");
+        const fb = getFallbackOpenAI();
+        if (fb) {
+          requestLog.warn({ err: error }, "OpenRouter daily free limit hit — falling back to gpt-4o-mini via Replit AI");
+          return await fb.chat.completions.create({ ...payload, model: FALLBACK_MODEL }, { signal });
+        }
+        throw error;
+      }
+
       if (!isRetryableAIError(error) || attempt >= delays.length) {
         throw error;
       }
