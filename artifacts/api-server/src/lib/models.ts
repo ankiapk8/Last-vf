@@ -23,7 +23,7 @@ export const FREE_TEXT_MODEL =
 
 /** Multimodal / vision model — used for image-based card generation */
 export const FREE_VISION_MODEL =
-  envVision ?? (isOpenRouter ? "google/gemma-4-31b-it:free" : "gpt-4o-mini");
+  envVision ?? (isOpenRouter ? "meta-llama/llama-3.2-11b-vision-instruct:free" : "gpt-4o-mini");
 
 /** Long-form explanation model — AI Explanation feature */
 export const EXPLAIN_MODEL =
@@ -31,7 +31,7 @@ export const EXPLAIN_MODEL =
 
 /** Vision model for detecting figures in PDF page images */
 export const VISUAL_DETECTION_MODEL =
-  isOpenRouter ? "google/gemma-4-31b-it:free" : FREE_VISION_MODEL;
+  isOpenRouter ? "meta-llama/llama-3.2-11b-vision-instruct:free" : FREE_VISION_MODEL;
 
 /** Human-readable list of all active models (for logging / health endpoint) */
 export const MODEL_SUMMARY = {

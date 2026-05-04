@@ -22,12 +22,12 @@ function rateLimitMiddleware(req: Request, res: Response, next: NextFunction): v
 }
 
 const MAX_PAGE_IMAGES = Number.MAX_SAFE_INTEGER;
-const VISUAL_BATCH_SIZE = 6;
+const VISUAL_BATCH_SIZE = 3;
 const MAX_VISUAL_PAGES = Number.MAX_SAFE_INTEGER;
 const MAX_CARD_TARGET = Number.MAX_SAFE_INTEGER;
 const CROP_PADDING = 0.04;
 const MIN_CROP_DIMENSION = 0.12;
-const VISUAL_CONCURRENCY = 2;
+const VISUAL_CONCURRENCY = 1;
 // Reject any visual card whose bbox covers more than this fraction of the page
 // area. Full-page bboxes are almost always the model giving up and screenshotting
 // the whole page instead of finding a real figure on it. The user explicitly does
@@ -876,7 +876,7 @@ async function generateAllVisualCards(
     doneBatches += chunk.length;
     onBatchGroupDone?.(doneBatches, batches.length);
 
-    if (i + VISUAL_CONCURRENCY < batches.length) await sleep(500);
+    if (i + VISUAL_CONCURRENCY < batches.length) await sleep(4000);
   }
 
   // Multi-pass retry: find pages that had detected visual regions but produced
