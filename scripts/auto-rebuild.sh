@@ -39,12 +39,10 @@ build_all() {
   fi
 }
 
-# ── Initial build on startup ──────────────────────────────────────────────────
-log "Starting initial build..."
-build_all
+# ── Capture initial hash (no build on startup — Vite handles dev serving) ─────
 LAST_HASH=$(source_hash)
 echo "$LAST_HASH" > "$HASH_FILE"
-log "Initial build complete. Watching for source changes every ${POLL_INTERVAL}s..."
+log "Watching for source changes every ${POLL_INTERVAL}s (initial build skipped)..."
 
 # ── Watch loop ────────────────────────────────────────────────────────────────
 while true; do

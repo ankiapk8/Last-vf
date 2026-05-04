@@ -2,7 +2,7 @@
 # Pings both the API and the frontend every 4 minutes to prevent the dev repl from hibernating.
 API_PORT="${API_PORT:-3001}"
 FRONTEND_PORT="${FRONTEND_PORT:-5000}"
-INTERVAL=240
+INTERVAL=45
 
 echo "[keepalive] Starting — pinging API :${API_PORT} and frontend :${FRONTEND_PORT} every ${INTERVAL}s"
 

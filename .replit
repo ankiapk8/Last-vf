@@ -59,7 +59,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/start-frontend.sh"
+args = "bash scripts/start-all.sh"
 waitForPort = 5000
 
 [[workflows.workflow]]
