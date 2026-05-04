@@ -87,6 +87,7 @@ outputType = "console"
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
+integrations = ["javascript_openai_ai_integrations:2.0.0"]
 
 [postMerge]
 path = "scripts/post-merge.sh"
@@ -98,6 +99,5 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-AI_INTEGRATIONS_OPENAI_BASE_URL = "https://openrouter.ai/api/v1"
-AI_TEXT_MODEL = "google/gemini-2.0-flash-001"
-AI_VISION_MODEL = "google/gemini-2.0-flash-001"
+AI_TEXT_MODEL = "gpt-5.4"
+AI_VISION_MODEL = "gpt-5.4"
