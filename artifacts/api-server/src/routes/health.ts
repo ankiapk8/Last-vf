@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { pool } from "@workspace/db";
 import { logger } from "../lib/logger";
-import { FREE_TEXT_MODEL, FREE_VISION_MODEL } from "../lib/models";
+import { FREE_TEXT_MODEL, FREE_VISION_MODEL, EXPLAIN_MODEL, VISUAL_DETECTION_MODEL } from "../lib/models";
 
 const router: IRouter = Router();
 
@@ -30,37 +30,57 @@ async function checkDatabase(): Promise<CheckResult> {
   }
 }
 
-function checkAiProvider(): CheckResult {
-  const apiKey =
+async function checkAiProvider(): Promise<CheckResult> {
+  const hasEnvKey =
     process.env["OPENROUTER_API_KEY"] ||
     process.env["OPENAI_API_KEY1"] ||
     process.env["OPENAI_API_KEY"] ||
     process.env["AI_INTEGRATIONS_OPENAI_API_KEY"];
-  if (!apiKey) {
+
+  if (hasEnvKey) {
+    const baseUrl =
+      process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"] ||
+      process.env["OPENROUTER_BASE_URL"] ||
+      "https://openrouter.ai/api/v1";
+    try {
+      new URL(baseUrl);
+    } catch {
+      return { status: "fail", message: `Invalid AI base URL: ${baseUrl}` };
+    }
+    return { status: "ok" };
+  }
+
+  // Env key not visible — try importing the integration client at runtime.
+  // The Replit platform injects AI_INTEGRATIONS_OPENAI_API_KEY into managed
+  // server processes without exposing it through normal env introspection.
+  try {
+    const { isConfigured } = await import("@workspace/integrations-openai-ai-server");
+    if (isConfigured) {
+      return { status: "ok" };
+    }
     return {
       status: "fail",
-      message: "AI provider is not configured. Set OPENROUTER_API_KEY (preferred) or OPENAI_API_KEY in your environment.",
+      message: "AI provider is not configured. Set OPENROUTER_API_KEY (https://openrouter.ai/keys) or OPENAI_API_KEY in your environment.",
+    };
+  } catch {
+    return {
+      status: "fail",
+      message: "AI provider is not configured. Set OPENROUTER_API_KEY (https://openrouter.ai/keys) or OPENAI_API_KEY in your environment.",
     };
   }
-  const baseUrl =
-    process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"] ||
-    process.env["OPENROUTER_BASE_URL"] ||
-    "https://openrouter.ai/api/v1";
-  try {
-    new URL(baseUrl);
-  } catch {
-    return { status: "fail", message: `Invalid AI base URL: ${baseUrl}` };
-  }
-  return { status: "ok" };
 }
 
 router.get("/model-info", (_req, res) => {
-  const textModel  = FREE_TEXT_MODEL;
-  const visionModel = FREE_VISION_MODEL;
+  const textModel    = FREE_TEXT_MODEL;
+  const visionModel  = FREE_VISION_MODEL;
+  const explainModel = EXPLAIN_MODEL;
+  const visualModel  = VISUAL_DETECTION_MODEL;
   const isFree = (m: string) => /:free$/.test(m) || /free/i.test(m.split("/").pop() ?? "");
   res.json({
     textModel,
     visionModel,
+    explainModel,
+    visualModel,
     textFree:   isFree(textModel),
     visionFree: isFree(visionModel),
     sameModel:  textModel === visionModel,
@@ -70,7 +90,7 @@ router.get("/model-info", (_req, res) => {
 router.get("/healthz", async (_req, res) => {
   const [database, ai] = await Promise.all([
     checkDatabase(),
-    Promise.resolve(checkAiProvider()),
+    checkAiProvider(),
   ]);
 
   const allOk = database.status === "ok" && ai.status === "ok";
