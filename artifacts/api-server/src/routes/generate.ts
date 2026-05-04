@@ -4,7 +4,7 @@ import { GenerateCardsBody } from "@workspace/api-zod";
 import { createCanvas, loadImage } from "canvas";
 import { serializeCard } from "../lib/serialize-card";
 import { createRateLimiter } from "../lib/rate-limiter";
-import { FREE_TEXT_MODEL, FREE_VISION_MODEL } from "../lib/models";
+import { FREE_TEXT_MODEL, FREE_VISION_MODEL, VISUAL_DETECTION_MODEL } from "../lib/models";
 import { eq } from "drizzle-orm";
 import { getEffectiveIsPro, checkDeckQuota, recordDeckCreation, FREE_TIER, sendLimitError } from "../lib/free-tier-limits";
 
@@ -707,7 +707,7 @@ No markdown, no commentary, no \`\`\` fences — just the JSON array.${regionHin
 
   try {
     const response = await createChatCompletionWithRetry(openai, {
-      model: FREE_VISION_MODEL,
+      model: VISUAL_DETECTION_MODEL,
       max_completion_tokens: 32768,
       stream: false as const,
       messages: [
