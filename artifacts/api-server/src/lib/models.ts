@@ -1,20 +1,18 @@
 /**
- * Default AI model constants.
+ * AI model selection.
  *
- * All models are available on OpenRouter (openrouter.ai).
- * Override at runtime by setting the corresponding env var.
- *
- * google/gemini-2.5-flash-preview
- *   - Latest Gemini 2.5 Flash: 1M context, vision support,
- *     superior structured-JSON output, up to 65k output tokens.
- *   - Ideal for: flashcard generation, visual detection,
- *     explanations, mind-map generation, QBank creation.
- *
- * Fallback: google/gemini-2.0-flash-001 (stable, always available)
+ * Priority:
+ *  1. Explicit env override (AI_TEXT_MODEL / AI_VISION_MODEL)
+ *  2. OPENROUTER_API_KEY present → use free Gemini 2.0 Flash on OpenRouter
+ *  3. Replit modelFarm fallback → use gpt-4o-mini (works with AI_INTEGRATIONS_OPENAI_API_KEY)
  */
 
+const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
+
 export const FREE_TEXT_MODEL =
-  process.env.AI_TEXT_MODEL ?? "google/gemini-2.5-flash-preview";
+  process.env.AI_TEXT_MODEL ??
+  (isOpenRouter ? "google/gemini-2.0-flash-exp:free" : "gpt-4o-mini");
 
 export const FREE_VISION_MODEL =
-  process.env.AI_VISION_MODEL ?? "google/gemini-2.5-flash-preview";
+  process.env.AI_VISION_MODEL ??
+  (isOpenRouter ? "google/gemini-2.0-flash-exp:free" : "gpt-4o-mini");
